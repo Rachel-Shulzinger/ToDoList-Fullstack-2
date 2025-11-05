@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>טפסי התחברות והרשמה - TodoApi</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .auth-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            min-width: 400px;
+            text-align: center;
+        }
+
+        .auth-card h2 {
+            margin-bottom: 1.5rem;
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: right;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            margin-top: 1rem;
+        }
+
+        button[type="submit"]:hover {
+            opacity: 0.9;
+        }
+
+        .switch-auth {
+            margin-top: 1.5rem;
+            color: #666;
+        }
+
+        .link-button {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: inherit;
+            margin-right: 5px;
+        }
+
+        .link-button:hover {
+            color: #764ba2;
+        }
+
+        .demo-note {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .demo-note h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .demo-note p {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                padding: 20px;
+            }
+            
+            .auth-card {
+                min-width: auto;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div class="demo-note">
+            <h1>🎯 טפסי TodoApi</h1>
+            <p><strong>מה תראה כאן:</strong> דוגמאות של טפסי ההתחברות וההרשמה</p>
+            <p><strong>למה זה נועד:</strong> מערכת אימות JWT מלאה עם React</p>
+            <p><strong>תכונות:</strong> ולידציה, שגיאות, עיצוב מקצועי</p>
+        </div>
+
+        <div class="container">
+            <!-- טופס התחברות -->
+            <div class="auth-card">
+                <h2>התחברות</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label>שם משתמש:</label>
+                        <input type="text" id="login-username" placeholder="הכנס שם משתמש" required>
+                    </div>
+                    <div class="form-group">
+                        <label>סיסמה:</label>
+                        <input type="password" id="login-password" placeholder="הכנס סיסמה" required>
+                    </div>
+                    <button type="submit">התחבר</button>
+                </form>
+                <p class="switch-auth">
+                    אין לך משתמש? 
+                    <button type="button" class="link-button" onclick="switchToRegister()">
+                        הירשם כאן
+                    </button>
+                </p>
+            </div>
+
+            <!-- טופס הרשמה -->
+            <div class="auth-card">
+                <h2>הרשמה</h2>
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>שם משתמש:</label>
+                        <input type="text" id="register-username" placeholder="בחר שם משתמש" required minlength="3">
+                    </div>
+                    <div class="form-group">
+                        <label>סיסמה:</label>
+                        <input type="password" id="register-password" placeholder="בחר סיסמה" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label>אישור סיסמה:</label>
+                        <input type="password" id="register-confirm" placeholder="הכנס שוב את הסיסמה" required>
+                    </div>
+                    <button type="submit">הירשם</button>
+                </form>
+                <p class="switch-auth">
+                    יש לך כבר משתמש? 
+                    <button type="button" class="link-button" onclick="switchToLogin()">
+                        התחבר כאן
+                    </button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentMode = 'login'; // 'login' או 'register'
+        let isLoggedIn = false;
+        let currentUser = null;
+
+        // פונקציית התחברות אמיתית
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            
+            // הצגת loading
+            submitBtn.textContent = 'מתחבר...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('http://localhost:5213/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    showSuccess(`🎉 התחברת בהצלחה!\nשלום ${data.user.username}!`);
+                    showTodoApp(data.user);
+                } else {
+                    const errorText = await response.text();
+                    showError('❌ שם משתמש או סיסמה שגויים');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('❌ שגיאה בהתחברות לשרת. בדוק שה-API רץ על http://localhost:5213');
+            } finally {
+                submitBtn.textContent = 'התחבר';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // פונקציית הרשמה אמיתית
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            
+            // ולידציה מקומית
+            if (password !== confirm) {
+                showError('❌ הסיסמאות לא תואמות!');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showError('❌ הסיסמה חייבת להכיל לפחות 6 תווים!');
+                return;
+            }
+            
+            // הצגת loading
+            submitBtn.textContent = 'נרשם...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('http://localhost:5213/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    showSuccess(`🎉 נרשמת בהצלחה!\nשלום ${data.user.username}!`);
+                    showTodoApp(data.user);
+                } else {
+                    const errorText = await response.text();
+                    showError(`❌ שגיאה בהרשמה: ${errorText}`);
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                showError('❌ שגיאה בהתחברות לשרת. בדוק שה-API רץ על http://localhost:5213');
+            } finally {
+                submitBtn.textContent = 'הירשם';
+                submitBtn.disabled = false;
+            }
+        }
+
+        // מעבר בין טפסים
+        function switchToRegister() {
+            currentMode = 'register';
+            document.querySelector('.container').innerHTML = getRegisterForm();
+        }
+
+        function switchToLogin() {
+            currentMode = 'login';
+            document.querySelector('.container').innerHTML = getLoginForm();
+        }
+
+        // הצגת הודעות
+        function showError(message) {
+            const existingError = document.querySelector('.error-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            errorDiv.style.cssText = `
+                background: #fee;
+                border: 1px solid #fcc;  
+                color: #c66;
+                padding: 10px;
+                border-radius: 5px;
+                margin: 10px 0;
+                text-align: center;
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            
+            document.body.appendChild(errorDiv);
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            successDiv.style.cssText = `
+                background: #d4edda;
+                border: 1px solid #c3e6cb;
+                color: #155724;
+                padding: 10px;
+                border-radius: 5px;
+                margin: 10px 0;
+                text-align: center;
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+            
+            document.body.appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        // הצגת אפליקציית Todo לאחר התחברות
+        function showTodoApp(user) {
+            document.body.innerHTML = `
+                <div class="todo-app">
+                    <div class="user-header">
+                        <h1>🎯 רשימת המשימות שלי</h1>
+                        <div class="user-info">
+                            <span>שלום, ${user.username}!</span>
+                            <button onclick="logout()" class="logout-btn">התנתק</button>
+                        </div>
+                    </div>
+                    
+                    <div class="todo-container">
+                        <div class="add-todo">
+                            <form onsubmit="addTodo(event)">
+                                <input type="text" id="new-todo" placeholder="הוסף משימה חדשה..." required>
+                                <button type="submit">הוסף</button>
+                            </form>
+                        </div>
+                        
+                        <div class="todos-list" id="todos-list">
+                            <div class="loading">טוען משימות...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <style>
+                    .todo-app {
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        min-height: 100vh;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    }
+                    
+                    .user-header {
+                        background: white;
+                        padding: 20px;
+                        border-radius: 10px;
+                        margin-bottom: 20px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    }
+                    
+                    .user-info {
+                        display: flex;
+                        align-items: center;
+                        gap: 15px;
+                    }
+                    
+                    .logout-btn {
+                        background: #dc3545;
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    
+                    .logout-btn:hover {
+                        background: #c82333;
+                    }
+                    
+                    .todo-container {
+                        background: white;
+                        border-radius: 10px;
+                        padding: 20px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    }
+                    
+                    .add-todo form {
+                        display: flex;
+                        gap: 10px;
+                        margin-bottom: 20px;
+                    }
+                    
+                    .add-todo input {
+                        flex: 1;
+                        padding: 12px;
+                        border: 2px solid #ddd;
+                        border-radius: 5px;
+                        font-size: 16px;
+                    }
+                    
+                    .add-todo button {
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 16px;
+                    }
+                    
+                    .todo-item {
+                        display: flex;
+                        align-items: center;
+                        padding: 15px;
+                        border: 1px solid #eee;
+                        border-radius: 5px;
+                        margin-bottom: 10px;
+                        background: #f9f9f9;
+                    }
+                    
+                    .todo-item.completed {
+                        opacity: 0.6;
+                        text-decoration: line-through;
+                    }
+                    
+                    .todo-item input[type="checkbox"] {
+                        margin-left: 10px;
+                        transform: scale(1.2);
+                    }
+                    
+                    .todo-item .todo-text {
+                        flex: 1;
+                        margin: 0 15px;
+                        font-size: 16px;
+                    }
+                    
+                    .todo-item .delete-btn {
+                        background: #dc3545;
+                        color: white;
+                        border: none;
+                        padding: 5px 10px;
+                        border-radius: 3px;
+                        cursor: pointer;
+                        font-size: 12px;
+                    }
+                    
+                    .loading {
+                        text-align: center;
+                        padding: 20px;
+                        color: #666;
+                    }
+                </style>
+            `;
+            
+            // טעינת המשימות
+            loadTodos();
+        }
+
+        // טעינת משימות מה-API
+        async function loadTodos() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5213/items', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const todos = await response.json();
+                    displayTodos(todos);
+                } else {
+                    showError('❌ שגיאה בטעינת המשימות');
+                }
+            } catch (error) {
+                console.error('Load todos error:', error);
+                showError('❌ שגיאה בהתחברות לשרת');
+            }
+        }
+
+        // הצגת המשימות
+        function displayTodos(todos) {
+            const todosList = document.getElementById('todos-list');
+            
+            if (todos.length === 0) {
+                todosList.innerHTML = '<div class="loading">אין משימות עדיין. הוסף משימה ראשונה!</div>';
+                return;
+            }
+            
+            todosList.innerHTML = todos.map(todo => `
+                <div class="todo-item ${todo.isComplete ? 'completed' : ''}">
+                    <input type="checkbox" ${todo.isComplete ? 'checked' : ''} 
+                           onchange="toggleTodo(${todo.id}, this.checked)">
+                    <span class="todo-text">${todo.name}</span>
+                    <button class="delete-btn" onclick="deleteTodo(${todo.id})">מחק</button>
+                </div>
+            `).join('');
+        }
+
+        // הוספת משימה חדשה
+        async function addTodo(event) {
+            event.preventDefault();
+            
+            const input = document.getElementById('new-todo');
+            const todoText = input.value.trim();
+            
+            if (!todoText) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5213/items', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name: todoText, isComplete: false })
+                });
+
+                if (response.ok) {
+                    input.value = '';
+                    loadTodos(); // רענון הרשימה
+                    showSuccess('✅ המשימה נוספה בהצלחה!');
+                } else {
+                    showError('❌ שגיאה בהוספת המשימה');
+                }
+            } catch (error) {
+                console.error('Add todo error:', error);
+                showError('❌ שגיאה בהתחברות לשרת');
+            }
+        }
+
+        // שינוי סטטוס משימה
+        async function toggleTodo(id, isComplete) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://localhost:5213/items/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ isComplete })
+                });
+
+                if (response.ok) {
+                    loadTodos(); // רענון הרשימה
+                } else {
+                    showError('❌ שגיאה בעדכון המשימה');
+                }
+            } catch (error) {
+                console.error('Toggle todo error:', error);
+                showError('❌ שגיאה בהתחברות לשרת');
+            }
+        }
+
+        // מחיקת משימה
+        async function deleteTodo(id) {
+            if (!confirm('האם אתה בטוח שברצונך למחוק משימה זו?')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`http://localhost:5213/items/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    loadTodos(); // רענון הרשימה
+                    showSuccess('🗑️ המשימה נמחקה בהצלחה!');
+                } else {
+                    showError('❌ שגיאה במחיקת המשימה');
+                }
+            } catch (error) {
+                console.error('Delete todo error:', error);
+                showError('❌ שגיאה בהתחברות לשרת');
+            }
+        }
+
+        // התנתקות
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            location.reload();
+        }
+
+        // בדיקה אם המשתמש כבר מחובר
+        function checkAuthStatus() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token && user) {
+                showTodoApp(JSON.parse(user));
+                return true;
+            }
+            return false;
+        }
+
+        // טעינת HTML לטפסים
+        function getLoginForm() {
+            return `
+                <div class="auth-card">
+                    <h2>התחברות</h2>
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label>שם משתמש:</label>
+                            <input type="text" id="login-username" placeholder="הכנס שם משתמש" required>
+                        </div>
+                        <div class="form-group">
+                            <label>סיסמה:</label>
+                            <input type="password" id="login-password" placeholder="הכנס סיסמה" required>
+                        </div>
+                        <button type="submit">התחבר</button>
+                    </form>
+                    <p class="switch-auth">
+                        אין לך משתמש? 
+                        <button type="button" class="link-button" onclick="switchToRegister()">
+                            הירשם כאן
+                        </button>
+                    </p>
+                </div>
+            `;
+        }
+
+        function getRegisterForm() {
+            return `
+                <div class="auth-card">
+                    <h2>הרשמה</h2>
+                    <form onsubmit="handleRegister(event)">
+                        <div class="form-group">
+                            <label>שם משתמש:</label>
+                            <input type="text" id="register-username" placeholder="בחר שם משתמש" required minlength="3">
+                        </div>
+                        <div class="form-group">
+                            <label>סיסמה:</label>
+                            <input type="password" id="register-password" placeholder="בחר סיסמה" required minlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label>אישור סיסמה:</label>
+                            <input type="password" id="register-confirm" placeholder="הכנס שוב את הסיסמה" required>
+                        </div>
+                        <button type="submit">הירשם</button>
+                    </form>
+                    <p class="switch-auth">
+                        יש לך כבר משתמש? 
+                        <button type="button" class="link-button" onclick="switchToLogin()">
+                            התחבר כאן
+                        </button>
+                    </p>
+                </div>
+            `;
+        }
+
+        // הוספת אפקטים חזותיים
+        document.addEventListener('DOMContentLoaded', function() {
+            // בדיקה אם המשתמש כבר מחובר
+            if (!checkAuthStatus()) {
+                // הצגת אנימציות רק אם לא מחובר
+                const cards = document.querySelectorAll('.auth-card');
+                cards.forEach((card, index) => {
+                    card.style.animation = `fadeInUp 0.6s ease ${index * 0.2}s both`;
+                });
+            }
+        });
+
+        // CSS אנימציות
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# --------------------
+# .NET / Visual Studio files to ignore
+# --------------------
+[Bb]in/
+[Oo]bj/
+*.pdb
+*.suo
+*.user
+*.log
+[Dd]ebug/
+[Rr]elease/
+
+# Entity Framework (if you use migrations)
+Migrations/
+
+# --------------------
+# Node / Frontend (React) files to ignore
+# --------------------
+node_modules/
+package-lock.json
+
+# Build and distribution files
+dist/
+build/
+
+# --------------------
+# Ignore the inner Git repository (ToDoListReact)
+# --------------------
+ToDoListReact/
