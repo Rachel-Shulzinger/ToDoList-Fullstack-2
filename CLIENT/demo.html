@@ -224,6 +224,10 @@
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
                     
+                    // הצגת Token בקונסול ובהודעה
+                    console.log('JWT Token:', data.token);
+                    console.log('Token saved to localStorage');
+                    
                     showSuccess(`🎉 התחברת בהצלחה!\nשלום ${data.user.username}!`);
                     showTodoApp(data.user);
                 } else {
@@ -276,6 +280,10 @@
                     const data = await response.json();
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // הצגת Token בקונסול ובהודעה
+                    console.log('JWT Token:', data.token);
+                    console.log('Token saved to localStorage');
                     
                     showSuccess(`🎉 נרשמת בהצלחה!\nשלום ${data.user.username}!`);
                     showTodoApp(data.user);
@@ -506,6 +514,7 @@
         async function loadTodos() {
             try {
                 const token = localStorage.getItem('token');
+                const user = JSON.parse(localStorage.getItem('user'));
                 const response = await fetch('http://localhost:5213/items', {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -513,14 +522,38 @@
                 });
 
                 if (response.ok) {
-                    const todos = await response.json();
-                    displayTodos(todos);
+                    const allTodos = await response.json();
+                    
+                    // שמירה ב-localStorage עבור המשתמש הנוכחי
+                    const userTodosKey = `todos_user_${user.id}`;
+                    let userTodos = JSON.parse(localStorage.getItem(userTodosKey) || '[]');
+                    
+                    // שמירת ID של המשימות שכבר נטענו
+                    const existingIds = userTodos.map(t => t.id);
+                    
+                    // הוספת משימות חדשות מהשרת רק אם הן לא קיימות
+                    allTodos.forEach(todo => {
+                        if (!existingIds.includes(todo.id)) {
+                            userTodos.push(todo);
+                        }
+                    });
+                    
+                    // שמירה מחדש
+                    localStorage.setItem(userTodosKey, JSON.stringify(userTodos));
+                    
+                    // הצגת המשימות של המשתמש הנוכחי בלבד
+                    displayTodos(userTodos);
                 } else {
                     showError('❌ שגיאה בטעינת המשימות');
                 }
             } catch (error) {
                 console.error('Load todos error:', error);
-                showError('❌ שגיאה בהתחברות לשרת');
+                
+                // אם אין חיבור לשרת, נטען מ-localStorage
+                const user = JSON.parse(localStorage.getItem('user'));
+                const userTodosKey = `todos_user_${user.id}`;
+                const userTodos = JSON.parse(localStorage.getItem(userTodosKey) || '[]');
+                displayTodos(userTodos);
             }
         }
 
@@ -554,6 +587,7 @@
             
             try {
                 const token = localStorage.getItem('token');
+                const user = JSON.parse(localStorage.getItem('user'));
                 const response = await fetch('http://localhost:5213/items', {
                     method: 'POST',
                     headers: {
@@ -564,8 +598,16 @@
                 });
 
                 if (response.ok) {
+                    const newTodo = await response.json();
+                    
+                    // שמירה ב-localStorage של המשתמש
+                    const userTodosKey = `todos_user_${user.id}`;
+                    let userTodos = JSON.parse(localStorage.getItem(userTodosKey) || '[]');
+                    userTodos.push(newTodo);
+                    localStorage.setItem(userTodosKey, JSON.stringify(userTodos));
+                    
                     input.value = '';
-                    loadTodos(); // רענון הרשימה
+                    loadTodos();
                     showSuccess('✅ המשימה נוספה בהצלחה!');
                 } else {
                     showError('❌ שגיאה בהוספת המשימה');
@@ -580,17 +622,44 @@
         async function toggleTodo(id, isComplete) {
             try {
                 const token = localStorage.getItem('token');
+                const user = JSON.parse(localStorage.getItem('user'));
+                
+                const getResponse = await fetch(`http://localhost:5213/items/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!getResponse.ok) {
+                    showError('❌ שגיאה בטעינת המשימה');
+                    return;
+                }
+                
+                const currentTodo = await getResponse.json();
+                
                 const response = await fetch(`http://localhost:5213/items/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ isComplete })
+                    body: JSON.stringify({ 
+                        name: currentTodo.name,
+                        isComplete: isComplete 
+                    })
                 });
 
                 if (response.ok) {
-                    loadTodos(); // רענון הרשימה
+                    // עדכון ב-localStorage של המשתמש
+                    const userTodosKey = `todos_user_${user.id}`;
+                    let userTodos = JSON.parse(localStorage.getItem(userTodosKey) || '[]');
+                    const todoIndex = userTodos.findIndex(t => t.id === id);
+                    if (todoIndex !== -1) {
+                        userTodos[todoIndex].isComplete = isComplete;
+                        localStorage.setItem(userTodosKey, JSON.stringify(userTodos));
+                    }
+                    
+                    loadTodos();
                 } else {
                     showError('❌ שגיאה בעדכון המשימה');
                 }
@@ -606,6 +675,7 @@
             
             try {
                 const token = localStorage.getItem('token');
+                const user = JSON.parse(localStorage.getItem('user'));
                 const response = await fetch(`http://localhost:5213/items/${id}`, {
                     method: 'DELETE',
                     headers: {
@@ -614,7 +684,13 @@
                 });
 
                 if (response.ok) {
-                    loadTodos(); // רענון הרשימה
+                    // מחיקה מ-localStorage של המשתמש
+                    const userTodosKey = `todos_user_${user.id}`;
+                    let userTodos = JSON.parse(localStorage.getItem(userTodosKey) || '[]');
+                    userTodos = userTodos.filter(t => t.id !== id);
+                    localStorage.setItem(userTodosKey, JSON.stringify(userTodos));
+                    
+                    loadTodos();
                     showSuccess('🗑️ המשימה נמחקה בהצלחה!');
                 } else {
                     showError('❌ שגיאה במחיקת המשימה');

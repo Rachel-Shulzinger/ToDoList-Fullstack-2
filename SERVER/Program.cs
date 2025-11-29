@@ -7,12 +7,10 @@ using TodoApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// הוספת DbContext ל-Services Container
 builder.Services.AddDbContext<ToDoDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("ToDoDB"),
     ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("ToDoDB"))));
 
-// הוספת CORS
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(builder =>
@@ -23,10 +21,8 @@ builder.Services.AddCors(options =>
     });
 });
 
-// הוספת JWT Service
 builder.Services.AddScoped<JwtService>();
 
-// הוספת Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -45,13 +41,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// הוספת Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
+        Description = "JWT Authorization header using the Bearer scheme.",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -76,32 +71,23 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// הפעלת CORS
 app.UseCors();
-
-// הפעלת Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-// הפעלת Swagger (רק בסביבת פיתוח)
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.MapGet("/", () => "Hello World!");
-
-// Register endpoint - הרשמה
 app.MapPost("/auth/register", async (RegisterRequest request, ToDoDbContext context, JwtService jwtService) =>
 {
-    // בדיקה אם המשתמש כבר קיים
     if (await context.Users.AnyAsync(u => u.Username == request.Username))
     {
         return Results.BadRequest("Username already exists");
     }
 
-    // יצירת משתמש חדש עם הצפנת סיסמה (פשוטה לדוגמה)
     var user = new User
     {
         Username = request.Username,
@@ -118,7 +104,6 @@ app.MapPost("/auth/register", async (RegisterRequest request, ToDoDbContext cont
 .WithName("Register")
 .WithSummary("Register a new user");
 
-// Login endpoint - התחברות
 app.MapPost("/auth/login", async (LoginRequest request, ToDoDbContext context, JwtService jwtService) =>
 {
     var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
@@ -134,17 +119,13 @@ app.MapPost("/auth/login", async (LoginRequest request, ToDoDbContext context, J
 .WithName("Login")
 .WithSummary("Login user");
 
-// שליפת כל המשימות - GET /items
 app.MapGet("/items", async (ToDoDbContext context) =>
 {
-    return await context.Items.ToListAsync();
+    return Results.Ok(await context.Items.ToListAsync());
 })
 .RequireAuthorization()
-.WithName("GetAllItems")
-.WithSummary("Get all todo items")
-.WithDescription("Retrieves all todo items from the database");
+.WithName("GetAllItems");
 
-// הוספת משימה חדשה - POST /items
 app.MapPost("/items", async (Item item, ToDoDbContext context) =>
 {
     context.Items.Add(item);
@@ -152,11 +133,8 @@ app.MapPost("/items", async (Item item, ToDoDbContext context) =>
     return Results.Created($"/items/{item.Id}", item);
 })
 .RequireAuthorization()
-.WithName("CreateItem")
-.WithSummary("Create a new todo item")
-.WithDescription("Creates a new todo item in the database");
+.WithName("CreateItem");
 
-// עדכון משימה - PUT /items/{id}
 app.MapPut("/items/{id}", async (int id, Item updatedItem, ToDoDbContext context) =>
 {
     var item = await context.Items.FindAsync(id);
@@ -172,11 +150,8 @@ app.MapPut("/items/{id}", async (int id, Item updatedItem, ToDoDbContext context
     return Results.Ok(item);
 })
 .RequireAuthorization()
-.WithName("UpdateItem")
-.WithSummary("Update an existing todo item")
-.WithDescription("Updates an existing todo item by ID");
+.WithName("UpdateItem");
 
-// מחיקת משימה - DELETE /items/{id}
 app.MapDelete("/items/{id}", async (int id, ToDoDbContext context) =>
 {
     var item = await context.Items.FindAsync(id);
@@ -190,8 +165,6 @@ app.MapDelete("/items/{id}", async (int id, ToDoDbContext context) =>
     return Results.NoContent();
 })
 .RequireAuthorization()
-.WithName("DeleteItem")
-.WithSummary("Delete a todo item")
-.WithDescription("Deletes a todo item by ID");
+.WithName("DeleteItem");
 
 app.Run();
