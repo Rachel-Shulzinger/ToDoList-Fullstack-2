@@ -72,8 +72,10 @@ export default {
   },
 
   setCompleted: async(id, isComplete)=>{
+    // קודם נקבל את המשימה הנוכחית כדי לשמור את השם
+    const currentTodo = await axios.get(`${apiUrl}/items/${id}`);
     const result = await axios.put(`${apiUrl}/items/${id}`, {
-      name: '', // נצטרך לקבל את השם הקיים
+      name: currentTodo.data.name, // שלח את השם הקיים
       isComplete: isComplete
     });
     return result.data;
