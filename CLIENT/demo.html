@@ -194,6 +194,10 @@
     </div>
 
     <script>
+        const API_URL = window.location.hostname === 'localhost' 
+          ? 'http://localhost:5213' 
+          : 'https://todoapi-server.onrender.com'; // החלף את todoapi-server בשם האמיתי של ה-Server שלך
+        
         let currentMode = 'login'; // 'login' או 'register'
         let isLoggedIn = false;
         let currentUser = null;
@@ -211,7 +215,7 @@
             submitBtn.disabled = true;
             
             try {
-                const response = await fetch('http://localhost:5213/auth/login', {
+                const response = await fetch(`${API_URL}/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -236,7 +240,7 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showError('❌ שגיאה בהתחברות לשרת. בדוק שה-API רץ על http://localhost:5213');
+                showError('❌ שגיאה בהתחברות לשרת. בדוק שה-API רץ על ' + API_URL);
             } finally {
                 submitBtn.textContent = 'התחבר';
                 submitBtn.disabled = false;
@@ -268,7 +272,7 @@
             submitBtn.disabled = true;
             
             try {
-                const response = await fetch('http://localhost:5213/auth/register', {
+                const response = await fetch(`${API_URL}/auth/register`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -293,7 +297,7 @@
                 }
             } catch (error) {
                 console.error('Register error:', error);
-                showError('❌ שגיאה בהתחברות לשרת. בדוק שה-API רץ על http://localhost:5213');
+                showError('❌ שגיאה בהתחברות לשרת. בדוק שה-API רץ על ' + API_URL);
             } finally {
                 submitBtn.textContent = 'הירשם';
                 submitBtn.disabled = false;
@@ -515,7 +519,7 @@
             try {
                 const token = localStorage.getItem('token');
                 const user = JSON.parse(localStorage.getItem('user'));
-                const response = await fetch('http://localhost:5213/items', {
+                const response = await fetch(`${API_URL}/items`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -588,7 +592,7 @@
             try {
                 const token = localStorage.getItem('token');
                 const user = JSON.parse(localStorage.getItem('user'));
-                const response = await fetch('http://localhost:5213/items', {
+                const response = await fetch(`${API_URL}/items`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -624,7 +628,7 @@
                 const token = localStorage.getItem('token');
                 const user = JSON.parse(localStorage.getItem('user'));
                 
-                const getResponse = await fetch(`http://localhost:5213/items/${id}`, {
+                const getResponse = await fetch(`${API_URL}/items/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -637,7 +641,7 @@
                 
                 const currentTodo = await getResponse.json();
                 
-                const response = await fetch(`http://localhost:5213/items/${id}`, {
+                const response = await fetch(`${API_URL}/items/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -676,7 +680,7 @@
             try {
                 const token = localStorage.getItem('token');
                 const user = JSON.parse(localStorage.getItem('user'));
-                const response = await fetch(`http://localhost:5213/items/${id}`, {
+                const response = await fetch(`${API_URL}/items/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`

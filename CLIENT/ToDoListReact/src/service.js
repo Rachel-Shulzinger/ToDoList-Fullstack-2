@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // הגדרת Config Defaults - כתובת בסיס לכל הקריאות
-axios.defaults.baseURL = "http://localhost:5213";
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5213";
+axios.defaults.baseURL = API_URL;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 // הוספת Request Interceptor להוספת JWT token
@@ -54,7 +55,7 @@ axios.interceptors.response.use(
   }
 );
 
-const apiUrl = "http://localhost:5213" // נשאיר זאת לתאימות לאחור
+const apiUrl = API_URL // נשתמש במשתנה הסביבה
 
 export default {
   getTasks: async () => {
