@@ -1,22 +1,24 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 80
-EXPOSE 443
 
 ENV ASPNETCORE_URLS=http://+:80
 
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG configuration=Release
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["SERVER/TodoApi.csproj", "SERVER/"]
-RUN dotnet restore "SERVER/TodoApi.csproj"
-COPY . .
-WORKDIR "/src/SERVER"
-RUN dotnet build "TodoApi.csproj" -c $configuration -o /app/build
+
+# Copy csproj and restore dependencies
+COPY *.csproj ./
+RUN dotnet restore
+
+# Copy everything else
+COPY . ./
+
+# Build
+RUN dotnet build "TodoApi.csproj" -c Release -o /app/build
 
 FROM build AS publish
-ARG configuration=Release
-RUN dotnet publish "TodoApi.csproj" -c $configuration -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "TodoApi.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
