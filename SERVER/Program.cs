@@ -81,6 +81,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+// Root endpoint - health check
+app.MapGet("/", () => Results.Ok(new { 
+    status = "Server is running", 
+    message = "TodoApi Server is healthy and ready to accept requests",
+    timestamp = DateTime.UtcNow 
+}))
+.WithName("HealthCheck")
+.WithSummary("Check if server is running");
+
 app.MapPost("/auth/register", async (RegisterRequest request, ToDoDbContext context, JwtService jwtService) =>
 {
     if (await context.Users.AnyAsync(u => u.Username == request.Username))
