@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ToDoDbContext>(options =>
     options.UseMySql(builder.Configuration.GetConnectionString("ToDoDB"),
-    ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("ToDoDB"))));
+    new MySqlServerVersion(new Version(8, 0, 21))));
 
 builder.Services.AddCors(options =>
 {
