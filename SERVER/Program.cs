@@ -13,11 +13,16 @@ builder.Services.AddDbContext<ToDoDbContext>(options =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(builder =>
+    options.AddDefaultPolicy(policyBuilder =>
     {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
+        policyBuilder.WithOrigins(
+            "https://todolist-fullstack-2-02.onrender.com",
+            "http://localhost:3000",
+            "http://localhost:5173"
+        )
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials();
     });
 });
 
@@ -71,7 +76,9 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// CORS must be before Authentication
 app.UseCors();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
