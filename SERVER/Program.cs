@@ -1,8 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using TodoApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,66 +18,19 @@ builder.Services.AddCors(options =>
             "http://localhost:5173"
         )
         .AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowCredentials();
+        .AllowAnyHeader();
     });
 });
-
-builder.Services.AddScoped<JwtService>();
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero
-        };
-    });
-
-builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme.",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
-});
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 // CORS must be before Authentication
 app.UseCors();
 
-app.UseAuthentication();
-app.UseAuthorization();
+// No authentication middleware - API is public (todos available without login)
 
 if (app.Environment.IsDevelopment())
 {
@@ -97,43 +47,7 @@ app.MapGet("/", () => Results.Ok(new {
 .WithName("HealthCheck")
 .WithSummary("Check if server is running");
 
-app.MapPost("/auth/register", async (RegisterRequest request, ToDoDbContext context, JwtService jwtService) =>
-{
-    if (await context.Users.AnyAsync(u => u.Username == request.Username))
-    {
-        return Results.BadRequest("Username already exists");
-    }
-
-    var user = new User
-    {
-        Username = request.Username,
-        Password = BCrypt.Net.BCrypt.HashPassword(request.Password),
-        CreatedAt = DateTime.Now
-    };
-
-    context.Users.Add(user);
-    await context.SaveChangesAsync();
-
-    var token = jwtService.GenerateToken(user);
-    return Results.Ok(new { Token = token, User = new { user.Id, user.Username } });
-})
-.WithName("Register")
-.WithSummary("Register a new user");
-
-app.MapPost("/auth/login", async (LoginRequest request, ToDoDbContext context, JwtService jwtService) =>
-{
-    var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
-    
-    if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
-    {
-        return Results.Unauthorized();
-    }
-
-    var token = jwtService.GenerateToken(user);
-    return Results.Ok(new { Token = token, User = new { user.Id, user.Username } });
-})
-.WithName("Login")
-.WithSummary("Login user");
+// Authentication endpoints removed - API provides public todos endpoints only
 
 app.MapGet("/items", async (ToDoDbContext context) =>
 {
