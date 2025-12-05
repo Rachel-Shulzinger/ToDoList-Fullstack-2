@@ -1,26 +1,24 @@
-# Build stage
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /src
-
-# Copy csproj and restore
-COPY *.csproj ./
-RUN dotnet restore
-
-# Copy everything and build
-COPY . ./
-RUN dotnet publish -c Release -o /app/publish
-
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-COPY --from=build /app/publish .
-
-# Expose port
 EXPOSE 80
+EXPOSE 443
 
-# Set environment
 ENV ASPNETCORE_URLS=http://+:80
-ENV ASPNETCORE_ENVIRONMENT=Production
 
-# Run the app
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG configuration=Release
+WORKDIR /src
+COPY ["SERVER/TodoApi.csproj", "SERVER/"]
+RUN dotnet restore "SERVER/TodoApi.csproj"
+COPY . .
+WORKDIR "/src/SERVER"
+RUN dotnet build "TodoApi.csproj" -c $configuration -o /app/build
+
+FROM build AS publish
+ARG configuration=Release
+RUN dotnet publish "TodoApi.csproj" -c $configuration -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "TodoApi.dll"]
