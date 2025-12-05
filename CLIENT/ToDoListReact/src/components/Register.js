@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import './Auth.css';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5213';
+
 function Register({ onLogin, switchToLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -25,7 +27,7 @@ function Register({ onLogin, switchToLogin }) {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5213/auth/register', {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
