@@ -1,42 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import service from './service.js';
-import Login from './components/Login.js';
-import Register from './components/Register.js';
 
 function App() {
   const [newTodo, setNewTodo] = useState("");
   const [todos, setTodos] = useState([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState('login'); // 'login' או 'register'
 
-  // בדיקה אם יש token שמור
+  // טעינת המשימות בטעינת הדף
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    
-    if (token && savedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(savedUser));
-    }
-
-    // האזנה לאירוע 401 מה-interceptor
-    const handleUnauthorized = () => {
-      setIsAuthenticated(false);
-      setUser(null);
-      setTodos([]);
-    };
-
-    window.addEventListener('unauthorized', handleUnauthorized);
-    return () => window.removeEventListener('unauthorized', handleUnauthorized);
+    getTodos();
   }, []);
-
-  // טעינת המשימות רק אם מחובר
-  useEffect(() => {
-    if (isAuthenticated) {
-      getTodos();
-    }
-  }, [isAuthenticated]);
 
   async function getTodos() {
     try {
@@ -44,6 +16,7 @@ function App() {
       setTodos(todos);
     } catch (error) {
       console.error('Error fetching todos:', error);
+      setTodos([]); // אם יש שגיאה, הצג רשימה ריקה
     }
   }
 
@@ -78,47 +51,12 @@ function App() {
     }
   }
 
-  const handleLogin = (token, userData) => {
-    setIsAuthenticated(true);
-    setUser(userData);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setIsAuthenticated(false);
-    setUser(null);
-    setTodos([]);
-  };
-
-  // אם לא מחובר - הצג דף התחברות/הרשמה
-  if (!isAuthenticated) {
-    return authMode === 'login' ? (
-      <Login 
-        onLogin={handleLogin}
-        switchToRegister={() => setAuthMode('register')}
-      />
-    ) : (
-      <Register 
-        onLogin={handleLogin}
-        switchToLogin={() => setAuthMode('login')}
-      />
-    );
-  }
-
-  // אם מחובר - הצג את אפליקציית Todo
   return (
     <section className="todoapp">
       <header className="header">
-        <div className="user-info">
-          <span>שלום, {user.username}!</span>
-          <button onClick={handleLogout} className="logout-btn">
-            התנתק
-          </button>
-        </div>
         <h1>todos</h1>
         <form onSubmit={createTodo}>
-          <input className="new-todo" placeholder="Well, let's take on the day" value={newTodo} onChange={(e) => setNewTodo(e.target.value)} />
+          <input className="new-todo" placeholder="What needs to be done?" value={newTodo} onChange={(e) => setNewTodo(e.target.value)} />
         </form>
       </header>
       <section className="main" style={{ display: "block" }}>

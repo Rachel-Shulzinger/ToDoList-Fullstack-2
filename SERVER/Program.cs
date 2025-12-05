@@ -139,7 +139,6 @@ app.MapGet("/items", async (ToDoDbContext context) =>
 {
     return Results.Ok(await context.Items.ToListAsync());
 })
-.RequireAuthorization()
 .WithName("GetAllItems");
 
 app.MapPost("/items", async (Item item, ToDoDbContext context) =>
@@ -148,7 +147,6 @@ app.MapPost("/items", async (Item item, ToDoDbContext context) =>
     await context.SaveChangesAsync();
     return Results.Created($"/items/{item.Id}", item);
 })
-.RequireAuthorization()
 .WithName("CreateItem");
 
 app.MapPut("/items/{id}", async (int id, Item updatedItem, ToDoDbContext context) =>
@@ -165,7 +163,6 @@ app.MapPut("/items/{id}", async (int id, Item updatedItem, ToDoDbContext context
     await context.SaveChangesAsync();
     return Results.Ok(item);
 })
-.RequireAuthorization()
 .WithName("UpdateItem");
 
 app.MapDelete("/items/{id}", async (int id, ToDoDbContext context) =>
@@ -180,7 +177,6 @@ app.MapDelete("/items/{id}", async (int id, ToDoDbContext context) =>
     await context.SaveChangesAsync();
     return Results.NoContent();
 })
-.RequireAuthorization()
 .WithName("DeleteItem");
 
 app.Run();
