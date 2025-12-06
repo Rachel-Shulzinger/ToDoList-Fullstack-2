@@ -12,11 +12,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policyBuilder =>
     {
-        policyBuilder.WithOrigins(
-            "https://todolist-fullstack-2-02.onrender.com",
-            "http://localhost:3000",
-            "http://localhost:5173"
-        )
+        policyBuilder.AllowAnyOrigin()
         .AllowAnyMethod()
         .AllowAnyHeader();
     });
